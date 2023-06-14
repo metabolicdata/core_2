@@ -65,7 +65,7 @@ class KafkaReader(val servers: Seq[String], apiKey: String, apiSecret: String, t
       .option("subscribe", topic)
       .option("kafka.session.timeout.ms", 45000)
       .option("kafka.client.dns.lookup","use_all_dns_ips")
-      .option("startingOffsets", "latest")
+      .option("startingOffsets", "earliest")
       .option("failOnDataLoss", false)
 
 
