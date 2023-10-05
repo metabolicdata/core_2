@@ -5,7 +5,7 @@ import com.metabolic.data.core.services.spark.reader.file.{CSVReader, DeltaReade
 import com.metabolic.data.core.services.spark.reader.stream.KafkaReader
 import com.metabolic.data.core.services.spark.reader.table.TableReader
 import com.metabolic.data.core.services.spark.transformations._
-import com.metabolic.data.mapper.domain.io.EngineMode.EngineMode
+import com.metabolic.data.mapper.domain.io.EngineMode.{Batch, EngineMode}
 import com.metabolic.data.mapper.domain.io._
 import com.metabolic.data.mapper.domain.ops._
 import com.metabolic.data.mapper.domain.ops.source._
@@ -18,7 +18,7 @@ object MetabolicReader extends Logging {
 
   val input = readSource(source, mode, spark)
 
-  val prepared = prepareSource(source, historical, input)
+  val prepared = prepareSource(source, mode, historical, input)
 
   prepared.createOrReplaceTempView(source.name)
 
@@ -65,16 +65,23 @@ object MetabolicReader extends Logging {
   }
  }
 
- private def prepareSource(source: Source, historical: Boolean, input: DataFrame) = {
+ private def prepareSource(source: Source, mode: EngineMode, historical: Boolean, input: DataFrame) = {
   source.ops
     .foldLeft(input) { (df: DataFrame, op: SourceOp) =>
 
      op match {
       case filter: FilterSourceOp => {
        if (!historical) {
-        df
-          .transform(new DateFieldUpToReader(filter.onColumn, filter.toDate).filter())
-          .transform(new DateFieldFromReader(filter.onColumn, filter.fromDate).filter())
+        mode match {
+         case Batch =>
+          df.
+            transform(new DateFieldUpToReader(filter.onColumn, filter.toDate).filter())
+            .transform(new DateFieldFromReader(filter.onColumn, filter.fromDate).filter())
+         case Stream =>
+            df
+              .transform(new DateFieldFromReader(filter.onColumn, filter.fromDate).filter())
+
+        }
        } else df
       }
       case prune: PruneDateComponentsSourceOp => {

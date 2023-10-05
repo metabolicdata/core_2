@@ -10,7 +10,7 @@ import org.scalatest.funsuite.AnyFunSuite
 class GlueCatalogServiceTest extends AnyFunSuite
   with RegionedTest {
 
-  ignore("Works") {
+  test("Works") {
 
     val s3Path = Seq("s3://factorial-etl/entity_mapper/dl/clean/subs/")
     val config = Environment("[Test] ", EngineMode.Batch, "", true, "test_data_lake", "AWSGlueServiceRoleDefault", Option.apply("fooBarAtlan"))
